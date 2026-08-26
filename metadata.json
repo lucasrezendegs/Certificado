@@ -1,0 +1,6 @@
+{
+  "name": "B ADM QGEX Certificados",
+  "description": "Sistema Web Gerador de Certificados em Massa para a B ADM QGEX",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
