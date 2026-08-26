@@ -82,12 +82,18 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: 20,
   },
+  centerBadge: {
+    width: 45,
+    height: 45,
+    marginBottom: 8,
+    objectFit: 'contain',
+  },
   leftBadge: {
     position: 'absolute',
     top: -10,
     left: -10,
-    width: 55,
-    height: 75,
+    width: 65,
+    height: 85,
     objectFit: 'contain',
   },
   rightContainer: {
@@ -97,8 +103,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rightBadge: {
-    width: 55,
-    height: 75,
+    width: 65,
+    height: 85,
     objectFit: 'contain',
     marginBottom: 4,
   },
@@ -145,9 +151,15 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
   signatureContainer: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
     width: '100%',
     marginTop: 'auto',
+  },
+  signatureBlock: {
+    alignItems: 'center',
+    width: 280,
   },
   signatureImage: {
     width: 140,
@@ -174,10 +186,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   footerRight: {
-    position: 'absolute',
-    bottom: -15,
-    right: -10,
     alignItems: 'flex-end',
+    marginBottom: 5,
   },
   footerText: {
     fontSize: 8,
@@ -211,6 +221,7 @@ export const CertificatePage = ({ student, directorName, directorSignature, left
               <Text style={styles.controlNumber}>{student.controlNumber}</Text>
             </View>
             
+            <Image src="/logo_md.png" style={styles.centerBadge} />
             <Text style={styles.federalText}>
               REPÚBLICA FEDERATIVA DO BRASIL{'\n'}
               MINISTÉRIO DA DEFESA{'\n'}
@@ -235,14 +246,16 @@ export const CertificatePage = ({ student, directorName, directorSignature, left
           </Text>
 
           <View style={styles.signatureContainer}>
-            {directorSignature ? (
-              <Image src={directorSignature} style={styles.signatureImage} />
-            ) : (
-              <View style={{ height: 60 }} />
-            )}
-            <View style={styles.signatureLine} />
-            <Text style={styles.signatureName}>{directorName.toUpperCase()}</Text>
-            <Text style={styles.signatureRole}>Diretor Geral</Text>
+            <View style={styles.signatureBlock}>
+              {directorSignature ? (
+                <Image src={directorSignature} style={styles.signatureImage} />
+              ) : (
+                <View style={{ height: 60 }} />
+              )}
+              <View style={styles.signatureLine} />
+              <Text style={styles.signatureName}>{directorName.toUpperCase()}</Text>
+              <Text style={styles.signatureRole}>Diretor Geral</Text>
+            </View>
             
             <View style={styles.footerRight}>
               <Text style={styles.footerText}>CNPJ Nº 21.744.847/0001-50</Text>
