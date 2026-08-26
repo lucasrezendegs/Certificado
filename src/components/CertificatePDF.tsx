@@ -13,7 +13,7 @@ const formatDateExtenso = (dateStr: string) => {
     return dateStr;
   }
   
-  const months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   const monthName = months[parseInt(month, 10) - 1];
   if (monthName) return `${parseInt(day, 10)} de ${monthName} de ${year}`;
   return dateStr;
@@ -52,22 +52,22 @@ const formatPeriodExtenso = (start: string, end: string, fallback?: string) => {
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
-    backgroundColor: '#fafaf9', // Um tom levemente off-white/papel
-    padding: 20,
+    backgroundColor: '#F9F9F6', // Cor de papel creme/pergaminho
+    padding: 25,
     fontFamily: 'Times-Roman',
   },
   outerBorder: {
-    border: '6pt solid #1e3a8a', // Azul escuro militar
-    padding: 3,
+    border: '3pt solid #111827', // Preto/chumbo escuro
+    padding: 2,
     height: '100%',
   },
   middleBorder: {
-    border: '1.5pt solid #d97706', // Dourado
-    padding: 3,
+    border: '1pt solid #111827',
+    padding: 2,
     height: '100%',
   },
   innerBorder: {
-    border: '2pt solid #1e3a8a',
+    border: '1pt solid #111827',
     height: '100%',
     padding: 35,
     flexDirection: 'column',
@@ -76,119 +76,115 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    alignItems: 'center',
     width: '100%',
-    marginBottom: 30,
-    alignItems: 'flex-start',
+    position: 'relative',
+    marginBottom: 20,
   },
-  logo: {
-    width: 65,
-    height: 85,
+  leftBadge: {
+    position: 'absolute',
+    top: -10,
+    left: -10,
+    width: 55,
+    height: 75,
     objectFit: 'contain',
   },
-  titleContainer: {
+  rightContainer: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
     alignItems: 'center',
-    flex: 1,
-    paddingHorizontal: 10,
-    marginTop: 10,
   },
-  title: {
-    fontSize: 42,
-    color: '#d97706',
-    fontFamily: 'Times-Bold',
-    letterSpacing: 8,
-    marginBottom: 15,
-    textTransform: 'uppercase',
-  },
-  subtitle: {
-    fontSize: 18,
-    fontFamily: 'Times-Bold',
-    textAlign: 'center',
-    marginBottom: 15,
-    color: '#1e3a8a',
-    textTransform: 'uppercase',
-  },
-  divider: {
-    width: 250,
-    height: 2,
-    backgroundColor: '#d97706',
-    marginVertical: 10,
+  rightBadge: {
+    width: 55,
+    height: 75,
+    objectFit: 'contain',
+    marginBottom: 4,
   },
   controlNumber: {
-    fontSize: 14,
+    fontSize: 10,
+    fontFamily: 'Times-Roman',
+    color: '#4b5563',
+  },
+  federalText: {
+    fontFamily: 'Times-Roman',
+    fontSize: 9,
+    textAlign: 'center',
+    lineHeight: 1.2,
+    color: '#111827',
+    letterSpacing: 0.5,
+  },
+  title: {
+    fontSize: 24,
+    color: '#111827',
     fontFamily: 'Times-Bold',
-    textAlign: 'right',
-    width: '100%',
-    marginTop: 10,
-    color: '#333333',
+    letterSpacing: 1.5,
+    marginTop: 25,
+    marginBottom: 25,
+    textTransform: 'uppercase',
   },
   bodyText: {
     fontSize: 15,
+    fontFamily: 'Times-Roman',
     lineHeight: 1.8,
     textAlign: 'justify',
-    marginTop: 35,
+    marginTop: 10,
     marginBottom: 40,
     color: '#111827',
+    paddingHorizontal: 20,
   },
   boldText: {
     fontFamily: 'Times-Bold',
   },
-  italicText: {
-    fontFamily: 'Times-Italic',
-  },
   date: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'Times-Bold',
     textAlign: 'center',
-    marginBottom: 60,
-    color: '#1e3a8a',
+    marginBottom: 35,
+    color: '#111827',
   },
   signatureContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    position: 'absolute',
-    bottom: 35,
-    left: 35,
-    right: 35,
-    alignItems: 'flex-end',
-  },
-  signatureBlock: {
     alignItems: 'center',
-    width: '45%',
+    width: '100%',
+    marginTop: 'auto',
   },
   signatureImage: {
     width: 140,
-    height: 70,
+    height: 60,
     objectFit: 'contain',
-    marginBottom: 5,
+    marginBottom: 2,
+    zIndex: 10,
   },
   signatureLine: {
-    width: '100%',
+    width: 280,
     height: 1,
-    backgroundColor: '#000',
-    marginBottom: 8,
+    backgroundColor: '#111827',
+    marginBottom: 6,
   },
   signatureName: {
     fontSize: 12,
     fontFamily: 'Times-Bold',
+    color: '#111827',
   },
   signatureRole: {
     fontSize: 11,
-    color: '#4b5563',
+    fontFamily: 'Times-Roman',
+    color: '#111827',
+    marginTop: 2,
   },
   footerRight: {
+    position: 'absolute',
+    bottom: -15,
+    right: -10,
     alignItems: 'flex-end',
-    justifyContent: 'flex-end',
-    width: '50%',
   },
   footerText: {
-    fontSize: 9,
+    fontSize: 8,
     textAlign: 'right',
     lineHeight: 1.5,
     color: '#6b7280',
-    fontFamily: 'Times-Bold',
+    fontFamily: 'Times-Roman',
   }
 });
 
@@ -208,24 +204,20 @@ export const CertificatePage = ({ student, directorName, directorSignature, left
         <View style={styles.innerBorder}>
           
           <View style={styles.header}>
-            {leftBadge ? (
-              <Image src={leftBadge} style={styles.logo} />
-            ) : (
-              <View style={styles.logo} />
-            )}
+            <Image src={leftBadge || "/segexsf.png"} style={styles.leftBadge} />
             
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>CERTIFICADO</Text>
-              <Text style={styles.subtitle}>{student.course}</Text>
-              <View style={styles.divider} />
+            <View style={styles.rightContainer}>
+              <Image src={rightBadge || "/badmqgex2.png"} style={styles.rightBadge} />
               <Text style={styles.controlNumber}>{student.controlNumber}</Text>
             </View>
+            
+            <Text style={styles.federalText}>
+              REPÚBLICA FEDERATIVA DO BRASIL{'\n'}
+              MINISTÉRIO DA DEFESA{'\n'}
+              EXÉRCITO BRASILEIRO
+            </Text>
 
-            {rightBadge ? (
-              <Image src={rightBadge} style={styles.logo} />
-            ) : (
-              <View style={styles.logo} />
-            )}
+            <Text style={styles.title}>CERTIFICADO DE CONCLUSÃO</Text>
           </View>
 
           <Text style={styles.bodyText}>
@@ -239,20 +231,18 @@ export const CertificatePage = ({ student, directorName, directorSignature, left
           </Text>
 
           <Text style={styles.date}>
-            Brasília-DF, {formatDateExtenso(student.issueDate)}
+            Brasília-DF, {formatDateExtenso(student.issueDate)}.
           </Text>
 
           <View style={styles.signatureContainer}>
-            <View style={styles.signatureBlock}>
-              {directorSignature ? (
-                <Image src={directorSignature} style={styles.signatureImage} />
-              ) : (
-                <View style={{ height: 70 }} />
-              )}
-              <View style={styles.signatureLine} />
-              <Text style={styles.signatureName}>{directorName.toUpperCase()}</Text>
-              <Text style={styles.signatureRole}>Diretor Geral</Text>
-            </View>
+            {directorSignature ? (
+              <Image src={directorSignature} style={styles.signatureImage} />
+            ) : (
+              <View style={{ height: 60 }} />
+            )}
+            <View style={styles.signatureLine} />
+            <Text style={styles.signatureName}>{directorName.toUpperCase()}</Text>
+            <Text style={styles.signatureRole}>Diretor Geral</Text>
             
             <View style={styles.footerRight}>
               <Text style={styles.footerText}>CNPJ Nº 21.744.847/0001-50</Text>
