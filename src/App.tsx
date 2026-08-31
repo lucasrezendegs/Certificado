@@ -4,13 +4,14 @@
  */
 
 import React, { useState } from 'react';
-import { Settings, FileEdit, Users } from 'lucide-react';
+import { Settings, FileEdit, Users, Eye } from 'lucide-react';
 import { SettingsTab } from './components/Tabs/SettingsTab';
 import { ManualEntryTab } from './components/Tabs/ManualEntryTab';
 import { BulkGenerationTab } from './components/Tabs/BulkGenerationTab';
+import { PreviewTab } from './components/Tabs/PreviewTab';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'settings' | 'manual' | 'bulk'>('manual');
+  const [activeTab, setActiveTab] = useState<'settings' | 'manual' | 'bulk' | 'preview'>('manual');
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-200">
@@ -61,6 +62,17 @@ export default function App() {
             Geração em Lote
           </button>
           <button
+            onClick={() => setActiveTab('preview')}
+            className={`flex-1 flex justify-center items-center gap-2 px-6 py-4 text-sm md:text-base font-bold rounded-lg transition-all duration-200 ${
+              activeTab === 'preview' 
+                ? 'bg-blue-800 text-white shadow-md transform scale-[1.02]' 
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <Eye size={20} />
+            Pré-visualização
+          </button>
+          <button
             onClick={() => setActiveTab('settings')}
             className={`flex-1 flex justify-center items-center gap-2 px-6 py-4 text-sm md:text-base font-bold rounded-lg transition-all duration-200 ${
               activeTab === 'settings' 
@@ -76,8 +88,9 @@ export default function App() {
         {/* Conteúdo da Aba Ativa */}
         <div className="transition-opacity duration-300">
           {activeTab === 'settings' && <SettingsTab />}
-          {activeTab === 'manual' && <ManualEntryTab />}
-          {activeTab === 'bulk' && <BulkGenerationTab />}
+          {activeTab === 'manual' && <ManualEntryTab setActiveTab={setActiveTab} />}
+          {activeTab === 'bulk' && <BulkGenerationTab setActiveTab={setActiveTab} />}
+          {activeTab === 'preview' && <PreviewTab setActiveTab={setActiveTab} />}
         </div>
 
       </main>

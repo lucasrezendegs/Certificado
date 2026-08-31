@@ -1,0 +1,601 @@
+export interface StudentData {
+  id: string;
+  controlNumber: string; // Número de Controle/Ano
+  name: string;
+  cpf: string;
+  registry: string; // Nº de Registro
+  category: string;
+  course: string;
+  periodStart: string; // Data Início (YYYY-MM-DD)
+  periodEnd: string; // Data Término (YYYY-MM-DD)
+  period?: string; // Texto legado como fallback
+  workload: string;
+  issueDate: string; // Data de Emissão (YYYY-MM-DD)
+}
+
+export interface AppState {
+  directorName: string;
+  directorRegistry: string;
+  directorSignature: string | null;
+  leftBadge: string | null;
+  rightBadge: string | null;
+  controlNumbers: string[];
+  courses: string[];
+  categories: string[];
+  workloads: string[];
+  students: StudentData[];
+  
+  setDirectorName: (name: string) => void;
+  setDirectorRegistry: (registry: string) => void;
+  setDirectorSignature: (signature: string | null) => void;
+  setLeftBadge: (badge: string | null) => void;
+  setRightBadge: (badge: string | null) => void;
+  addControlNumber: (controlNumber: string) => void;
+  addCourse: (course: string) => void;
+  addCategory: (category: string) => void;
+  addWorkload: (workload: string) => void;
+  setStudents: (students: StudentData[]) => void;
+  addStudent: (student: StudentData) => void;
+  removeStudent: (id: string) => void;
+  clearStudents: () => void;
+}
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { AppState, StudentData } from './types';
+
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      directorName: 'Carlos Henrique Ferreira De Mello',
+      directorRegistry: 'Reg. nº 12345/2026',
+      directorSignature: null,
+      leftBadge: null,
+      rightBadge: null,
+      controlNumbers: ['001/CVTE/2026', '006/CVTE/2026'],
+      courses: ['Condutores de Veículos de Transporte de Emergência', 'Formação de Cabos', 'Direção Defensiva Avançada'],
+      categories: ['AD', 'B', 'C', 'D', 'E'],
+      workloads: ['50h/a', '40h/a', '60h/a', '80h/a'],
+      students: [],
+
+      setDirectorName: (name) => set({ directorName: name }),
+      setDirectorRegistry: (registry) => set({ directorRegistry: registry }),
+      setDirectorSignature: (signature) => set({ directorSignature: signature }),
+      setLeftBadge: (badge) => set({ leftBadge: badge }),
+      setRightBadge: (badge) => set({ rightBadge: badge }),
+      
+      addControlNumber: (controlNumber) => set((state) => ({ 
+        controlNumbers: state.controlNumbers.includes(controlNumber) ? state.controlNumbers : [...state.controlNumbers, controlNumber] 
+      })),
+
+      addCourse: (course) => set((state) => ({ 
+        courses: state.courses.includes(course) ? state.courses : [...state.courses, course] 
+      })),
+      
+      addCategory: (category) => set((state) => ({ 
+        categories: state.categories.includes(category) ? state.categories : [...state.categories, category] 
+      })),
+      
+      addWorkload: (workload) => set((state) => ({ 
+        workloads: state.workloads.includes(workload) ? state.workloads : [...state.workloads, workload] 
+      })),
+
+      setStudents: (students) => set({ students }),
+      
+      addStudent: (student) => set((state) => ({ 
+        students: [...state.students, student] 
+      })),
+      
+      removeStudent: (id) => set((state) => ({ 
+        students: state.students.filter(s => s.id !== id) 
+      })),
+      
+      clearStudents: () => set({ students: [] }),
+    }),
+    {
+      name: 'certificado-storage-badmqgex',
+    }
+  )
+);
+import React, { useState } from 'react';
+import Papa from 'papaparse';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+import { pdf, PDFDownloadLink } from '@react-pdf/renderer';
+import { useAppStore } from '../../store';
+import { StudentData } from '../../types';
+import { SingleCertificatePDF, BulkCertificatePDF } from '../CertificatePDF';
+import { Upload, FileText, Download, Trash2, Archive, Users, CheckCircle2 } from 'lucide-react';
+
+interface Props {
+  setActiveTab: (tab: 'settings' | 'manual' | 'bulk' | 'preview') => void;
+}
+
+export const BulkGenerationTab = ({ setActiveTab }: Props) => {
+  const { students, setStudents, clearStudents, removeStudent, directorName, directorRegistry, directorSignature, leftBadge, rightBadge } = useAppStore();
+  const [csvText, setCsvText] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          processParsedData(results.data);
+        }
+      });
+    }
+  };
+
+  const handleTextParse = () => {
+    Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        processParsedData(results.data);
+      }
+    });
+  };
+
+  const processParsedData = (data: any[]) => {
+    const today = new Date();
+    const todayISO = today.toISOString().split('T')[0];
+
+    // Helper for date conversion if they input DD/MM/YYYY
+    const parseCSVDate = (d: string) => {
+      if (!d) return '';
+      if (d.includes('/')) {
+         const [day, month, year] = d.split('/');
+         if (year && month && day) return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      return d; // Return as is (might be YYYY-MM-DD or empty)
+    };
+
+    const newStudents: StudentData[] = data.map(row => ({
+      id: crypto.randomUUID(),
+      controlNumber: row.controlNumber || row['Nº Controle'] || '',
+      name: row.name || row['Nome'] || '',
+      cpf: row.cpf || row['CPF'] || '',
+      registry: row.registry || row['Nº Registro'] || '',
+      category: row.category || row['Categoria'] || '',
+      course: row.course || row['Curso'] || '',
+      periodStart: parseCSVDate(row.periodStart || row['Data Início'] || ''),
+      periodEnd: parseCSVDate(row.periodEnd || row['Data Término'] || ''),
+      period: row.period || row['Período'] || '', // Legacy fallback
+      workload: row.workload || row['Carga Horária'] || '',
+      issueDate: parseCSVDate(row.issueDate || row['Data Emissão'] || '') || todayISO,
+    })).filter(s => s.name && s.cpf); 
+
+    setStudents([...students, ...newStudents]);
+    setCsvText('');
+  };
+
+  const sanitizeFileName = (name: string) => {
+    return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_').toUpperCase();
+  };
+
+  const generateZip = async () => {
+    setIsProcessing(true);
+    try {
+      const JSZipModule = (await import('jszip')).default;
+      const zip = new JSZipModule();
+      
+      for (const student of students) {
+        const doc = <SingleCertificatePDF student={student} directorName={directorName} directorRegistry={directorRegistry} directorSignature={directorSignature} leftBadge={leftBadge} rightBadge={rightBadge} />;
+        const asPdf = pdf();
+        asPdf.updateContainer(doc);
+        const blob = await asPdf.toBlob();
+        
+        const fileName = `CERTIFICADO_${sanitizeFileName(student.name)}.pdf`;
+        zip.file(fileName, blob);
+      }
+      
+      const content = await zip.generateAsync({ type: 'blob' });
+      saveAs(content, 'certificados_lote.zip');
+    } catch (error) {
+      console.error('Erro ao gerar ZIP:', error);
+      alert('Ocorreu um erro ao gerar o arquivo ZIP.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-slate-200/60">
+        <div className="flex items-center gap-3 mb-8 border-b border-slate-100 pb-6">
+          <div className="bg-emerald-100 p-3 rounded-lg text-emerald-700">
+            <Users size={28} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-extrabold text-slate-900">
+              Geração em Lote (Massa)
+            </h2>
+            <p className="text-slate-500 text-sm mt-1">Gere dezenas de certificados instantaneamente a partir de uma planilha Excel.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+          
+          {/* Opção 1: Texto */}
+          <div className="space-y-4 p-6 bg-slate-50 border border-slate-200 rounded-xl hover:shadow-md transition-shadow">
+            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 border-l-4 border-blue-600 pl-2">
+              Opção 1: Colar Dados
+            </h3>
+            <p className="text-sm text-slate-600 mb-2 font-medium">
+              Copie do Excel e cole aqui (mantenha os cabeçalhos).
+            </p>
+            <textarea
+              className="w-full h-40 p-4 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none font-mono bg-white shadow-inner"
+              placeholder="controlNumber,name,cpf,registry,category,course,periodStart,periodEnd,workload,issueDate&#10;001/2026,JOÃO SILVA,123.456.789-00,0123,AD,Direção,2026-05-01,2026-05-05,50h/a,10/05/2026"
+              value={csvText}
+              onChange={(e) => setCsvText(e.target.value)}
+            />
+            <button
+              onClick={handleTextParse}
+              disabled={!csvText.trim()}
+              className="w-full py-3 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded-lg transition-colors disabled:opacity-50 flex justify-center items-center gap-2"
+            >
+              <FileText size={18} /> Processar Texto
+            </button>
+          </div>
+
+          {/* Opção 2: Arquivo */}
+          <div className="space-y-4 p-6 bg-slate-50 border border-slate-200 rounded-xl hover:shadow-md transition-shadow">
+            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 border-l-4 border-emerald-500 pl-2">
+              Opção 2: Arquivo CSV
+            </h3>
+            <p className="text-sm text-slate-600 mb-4 font-medium">
+              Faça o upload de um arquivo .csv salvo do seu Excel.
+            </p>
+            <div className="border-2 border-emerald-200 border-dashed rounded-xl p-10 text-center bg-white hover:bg-emerald-50 transition-colors cursor-pointer group h-[200px] flex items-center justify-center">
+              <label htmlFor="csvUpload" className="cursor-pointer flex flex-col items-center w-full">
+                <div className="bg-emerald-100 p-4 rounded-full group-hover:scale-110 transition-transform mb-3">
+                  <Upload size={32} className="text-emerald-700" />
+                </div>
+                <span className="text-lg font-bold text-emerald-800 group-hover:text-emerald-900 transition-colors">Selecionar arquivo CSV</span>
+                <input id="csvUpload" type="file" accept=".csv" className="sr-only" onChange={handleFileUpload} />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Prévia e Ações */}
+        {students.length > 0 && (
+          <div className="space-y-6 animate-in fade-in duration-500 bg-emerald-50 p-6 rounded-xl border border-emerald-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-bold text-emerald-900 flex items-center gap-2 mb-1">
+                  <CheckCircle2 className="text-emerald-500" />
+                  {students.length} Alunos Carregados
+                </h3>
+                <p className="text-emerald-700 text-sm">Os alunos foram adicionados à fila com sucesso.</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('preview')}
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-800 hover:to-blue-950 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all hover:scale-105 active:scale-95"
+              >
+                <Users size={20} />
+                Revisar na Fila e Baixar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+import React, { useState } from 'react';
+import { useAppStore } from '../../store';
+import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
+import { BulkCertificatePDF, SingleCertificatePDF } from '../CertificatePDF';
+import { Trash2, FileText, Archive, Eye, Users } from 'lucide-react';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+
+interface Props {
+  setActiveTab: (tab: 'settings' | 'manual' | 'bulk' | 'preview') => void;
+}
+
+export const PreviewTab = ({ setActiveTab }: Props) => {
+  const { students, removeStudent, clearStudents, directorName, directorRegistry, directorSignature, leftBadge, rightBadge } = useAppStore();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const sanitizeFileName = (name: string) => {
+    return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_').toUpperCase();
+  };
+
+  const generateZip = async () => {
+    try {
+      setIsProcessing(true);
+      const zip = new JSZip();
+      
+      for (const student of students) {
+        const doc = <SingleCertificatePDF student={student} directorName={directorName} directorRegistry={directorRegistry} directorSignature={directorSignature} leftBadge={leftBadge} rightBadge={rightBadge} />;
+        const asPdf = pdf();
+        asPdf.updateContainer(doc);
+        const blob = await asPdf.toBlob();
+        
+        const fileName = `CERTIFICADO_${sanitizeFileName(student.name)}.pdf`;
+        zip.file(fileName, blob);
+      }
+      
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      saveAs(zipBlob, 'CERTIFICADOS_INDIVIDUAIS.zip');
+    } catch (error) {
+      console.error('Erro ao gerar ZIP:', error);
+      alert('Houve um erro ao gerar o arquivo ZIP.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  if (students.length === 0) {
+    return (
+      <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="bg-white p-12 rounded-2xl shadow-xl border border-slate-200/60 text-center flex flex-col items-center">
+          <div className="bg-slate-100 p-6 rounded-full mb-6">
+            <Eye size={48} className="text-slate-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4">A Fila de Geração está vazia</h2>
+          <p className="text-slate-500 mb-8 max-w-md">
+            Você ainda não adicionou nenhum aluno. Adicione alunos individualmente na aba Entrada Manual ou importe uma planilha na aba Geração em Lote.
+          </p>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('manual')}
+              className="px-6 py-3 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold rounded-xl transition-colors"
+            >
+              Entrada Manual
+            </button>
+            <button
+              onClick={() => setActiveTab('bulk')}
+              className="px-6 py-3 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold rounded-xl transition-colors"
+            >
+              Importar Lote
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-slate-200/60">
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-6 mb-8 gap-4">
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <Eye className="text-blue-600" />
+            Pré-visualização e Fila ({students.length})
+          </h2>
+          <button 
+            onClick={clearStudents}
+            className="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors border border-transparent hover:border-red-200"
+          >
+            <Trash2 size={18} /> Limpar Fila
+          </button>
+        </div>
+
+        <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-sm mb-10">
+          <table className="w-full text-left text-sm text-slate-700">
+            <thead className="bg-slate-100 text-slate-900 font-bold uppercase tracking-wider text-xs">
+              <tr>
+                <th className="p-4 border-b">Nome</th>
+                <th className="p-4 border-b">CPF</th>
+                <th className="p-4 border-b">Nº Registro</th>
+                <th className="p-4 border-b">Controle/Ano</th>
+                <th className="p-4 border-b text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {students.map((student) => (
+                <tr key={student.id} className="hover:bg-blue-50 transition-colors">
+                  <td className="p-4 font-semibold text-slate-900">{student.name}</td>
+                  <td className="p-4 font-mono text-slate-600">{student.cpf}</td>
+                  <td className="p-4 font-mono text-slate-600">{student.registry}</td>
+                  <td className="p-4 font-mono font-semibold text-slate-800">{student.controlNumber}</td>
+                  <td className="p-4 text-center">
+                    <button onClick={() => removeStudent(student.id)} className="text-slate-400 hover:text-red-600 transition-colors bg-white hover:bg-red-50 p-2 rounded-md shadow-sm border border-slate-200 hover:border-red-200" title="Remover aluno">
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-5">
+          <PDFDownloadLink
+            document={<BulkCertificatePDF students={students} directorName={directorName} directorRegistry={directorRegistry} directorSignature={directorSignature} leftBadge={leftBadge} rightBadge={rightBadge} />}
+            fileName="CERTIFICADOS_LOTE.pdf"
+            className="flex-1 flex items-center justify-center gap-3 bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-800 hover:to-blue-950 text-white text-lg font-bold py-5 px-6 rounded-xl shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] text-center"
+          >
+            {({ loading }) => (
+              <>
+                <FileText size={24} />
+                {loading ? 'Gerando Documento...' : 'Baixar PDF Único (Impressão)'}
+              </>
+            )}
+          </PDFDownloadLink>
+          
+          <button
+            onClick={generateZip}
+            disabled={isProcessing}
+            className="flex-1 flex items-center justify-center gap-3 bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 text-white text-lg font-bold py-5 px-6 rounded-xl shadow-lg transform transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            <Archive size={24} />
+            {isProcessing ? 'Compactando Arquivos...' : 'Baixar ZIP (Separados)'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+import React, { ChangeEvent } from 'react';
+import { useAppStore } from '../../store';
+import { Settings, Image as ImageIcon, Shield } from 'lucide-react';
+
+export const SettingsTab = () => {
+  const { directorName, directorRegistry, directorSignature, leftBadge, rightBadge, setDirectorName, setDirectorRegistry, setDirectorSignature, setLeftBadge, setRightBadge } = useAppStore();
+
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>, setter: (val: string | null) => void) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setter(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const renderUploader = (title: string, value: string | null, setter: (val: string | null) => void, id: string, description: string) => (
+    <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 flex-1">
+      <label htmlFor={id} className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">
+        {title}
+      </label>
+      <div className="mt-2 flex items-center justify-center px-6 pt-8 pb-8 border-2 border-slate-300 border-dashed rounded-xl bg-white hover:bg-blue-50 transition-colors group cursor-pointer h-[240px]">
+        <div className="space-y-3 text-center w-full">
+          {value ? (
+            <div className="flex flex-col items-center gap-4">
+              <img src={value} alt={title} className="h-32 object-contain bg-transparent border-b-2 border-slate-200 pb-2" />
+              <button
+                type="button"
+                onClick={() => setter(null)}
+                className="text-red-600 font-bold hover:text-red-800 bg-red-50 px-4 py-2 rounded-lg transition-colors border border-red-100"
+              >
+                Remover e Alterar
+              </button>
+            </div>
+          ) : (
+            <label htmlFor={id} className="cursor-pointer w-full flex flex-col items-center">
+              <div className="bg-blue-100 p-4 rounded-full group-hover:scale-110 transition-transform mb-3">
+                <Shield size={32} className="text-blue-600" />
+              </div>
+              <span className="text-lg font-bold text-blue-700 group-hover:text-blue-800 transition-colors">Selecionar Arquivo</span>
+              <p className="text-sm text-slate-500 mt-2 font-medium">{description}</p>
+              <input id={id} name={id} type="file" accept="image/*" className="sr-only" onChange={(e) => handleImageUpload(e, setter)} />
+            </label>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-slate-200/60">
+        
+        <div className="flex items-center gap-3 mb-8 border-b border-slate-100 pb-6">
+          <div className="bg-slate-100 p-3 rounded-lg text-slate-700">
+            <Settings size={28} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-extrabold text-slate-900">
+              Configurações Administrativas
+            </h2>
+            <p className="text-slate-500 text-sm mt-1">Ajuste os dados globais que serão inseridos nos certificados.</p>
+          </div>
+        </div>
+        
+        <div className="space-y-8">
+          {/* Nome do Diretor */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+              <label htmlFor="directorName" className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Nome do Diretor Geral
+              </label>
+              <input
+                type="text"
+                id="directorName"
+                value={directorName}
+                onChange={(e) => setDirectorName(e.target.value)}
+                className="w-full px-4 py-3 text-lg bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all shadow-sm"
+                placeholder="Ex: Carlos Henrique Ferreira De Mello"
+              />
+              <p className="mt-2 text-sm text-slate-500 font-medium">Este nome aparecerá abaixo da assinatura.</p>
+            </div>
+            
+            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+              <label htmlFor="directorRegistry" className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Nº de Registro do Diretor
+              </label>
+              <input
+                type="text"
+                id="directorRegistry"
+                value={directorRegistry}
+                onChange={(e) => setDirectorRegistry(e.target.value)}
+                className="w-full px-4 py-3 text-lg bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all shadow-sm"
+                placeholder="Ex: Reg. nº 12345/2026"
+              />
+              <p className="mt-2 text-sm text-slate-500 font-medium">Aparecerá logo abaixo da função "Diretor Geral".</p>
+            </div>
+          </div>
+
+          {/* Assinatura */}
+          <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+            <label htmlFor="signatureUpload" className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">
+              Imagem da Assinatura do Diretor
+            </label>
+            <div className="mt-2 flex items-center justify-center px-6 pt-8 pb-8 border-2 border-slate-300 border-dashed rounded-xl bg-white hover:bg-blue-50 transition-colors group cursor-pointer h-[240px]">
+              <div className="space-y-3 text-center w-full">
+                {directorSignature ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <img src={directorSignature} alt="Assinatura" className="h-32 object-contain bg-transparent border-b-2 border-slate-200 pb-2" />
+                    <button
+                      type="button"
+                      onClick={() => setDirectorSignature(null)}
+                      className="text-red-600 font-bold hover:text-red-800 bg-red-50 px-4 py-2 rounded-lg transition-colors border border-red-100"
+                    >
+                      Remover e Alterar Assinatura
+                    </button>
+                  </div>
+                ) : (
+                  <label htmlFor="signatureUpload" className="cursor-pointer w-full flex flex-col items-center">
+                    <div className="bg-blue-100 p-4 rounded-full group-hover:scale-110 transition-transform mb-3">
+                      <ImageIcon size={32} className="text-blue-600" />
+                    </div>
+                    <span className="text-lg font-bold text-blue-700 group-hover:text-blue-800 transition-colors">Selecionar Arquivo da Assinatura</span>
+                    <p className="text-sm text-slate-500 mt-2 font-medium">PNG ou JPG até 2MB. Prefira imagens com fundo transparente.</p>
+                    <input id="signatureUpload" name="signatureUpload" type="file" accept="image/*" className="sr-only" onChange={(e) => handleImageUpload(e, setDirectorSignature)} />
+                  </label>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Brasões */}
+          <div className="pt-6 border-t border-slate-100">
+            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <Shield className="text-dourado" /> Brasões e Distintivos do Certificado
+            </h3>
+            <p className="text-sm text-slate-500 mb-6">
+              Faça o upload das imagens que você enviou (como "segexsf.png" e "badmqgex2.png") nestes campos. 
+              Elas serão exibidas nos cantos superior esquerdo e direito do certificado gerado.
+            </p>
+            <div className="flex flex-col md:flex-row gap-6">
+              {renderUploader(
+                "Brasão Esquerdo",
+                leftBadge,
+                setLeftBadge,
+                "leftBadgeUpload",
+                "Ex: segexsf.png"
+              )}
+              {renderUploader(
+                "Brasão Direito",
+                rightBadge,
+                setRightBadge,
+                "rightBadgeUpload",
+                "Ex: badmqgex2.png"
+              )}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};

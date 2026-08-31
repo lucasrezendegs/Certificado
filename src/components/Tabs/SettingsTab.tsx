@@ -3,7 +3,7 @@ import { useAppStore } from '../../store';
 import { Settings, Image as ImageIcon, Shield } from 'lucide-react';
 
 export const SettingsTab = () => {
-  const { directorName, directorSignature, leftBadge, rightBadge, setDirectorName, setDirectorSignature, setLeftBadge, setRightBadge } = useAppStore();
+  const { directorName, directorRegistry, directorSignature, clearQueueBehavior, setDirectorName, setDirectorRegistry, setDirectorSignature, setClearQueueBehavior } = useAppStore();
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>, setter: (val: string | null) => void) => {
     const file = e.target.files?.[0];
@@ -15,39 +15,6 @@ export const SettingsTab = () => {
       reader.readAsDataURL(file);
     }
   };
-
-  const renderUploader = (title: string, value: string | null, setter: (val: string | null) => void, id: string, description: string) => (
-    <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 flex-1">
-      <label htmlFor={id} className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">
-        {title}
-      </label>
-      <div className="mt-2 flex items-center justify-center px-6 pt-8 pb-8 border-2 border-slate-300 border-dashed rounded-xl bg-white hover:bg-blue-50 transition-colors group cursor-pointer h-[240px]">
-        <div className="space-y-3 text-center w-full">
-          {value ? (
-            <div className="flex flex-col items-center gap-4">
-              <img src={value} alt={title} className="h-32 object-contain bg-transparent border-b-2 border-slate-200 pb-2" />
-              <button
-                type="button"
-                onClick={() => setter(null)}
-                className="text-red-600 font-bold hover:text-red-800 bg-red-50 px-4 py-2 rounded-lg transition-colors border border-red-100"
-              >
-                Remover e Alterar
-              </button>
-            </div>
-          ) : (
-            <label htmlFor={id} className="cursor-pointer w-full flex flex-col items-center">
-              <div className="bg-blue-100 p-4 rounded-full group-hover:scale-110 transition-transform mb-3">
-                <Shield size={32} className="text-blue-600" />
-              </div>
-              <span className="text-lg font-bold text-blue-700 group-hover:text-blue-800 transition-colors">Selecionar Arquivo</span>
-              <p className="text-sm text-slate-500 mt-2 font-medium">{description}</p>
-              <input id={id} name={id} type="file" accept="image/*" className="sr-only" onChange={(e) => handleImageUpload(e, setter)} />
-            </label>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -66,20 +33,80 @@ export const SettingsTab = () => {
         </div>
         
         <div className="space-y-8">
-          {/* Nome do Diretor */}
+          {/* Comportamento Pós-Download */}
           <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-            <label htmlFor="directorName" className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">
-              Nome do Diretor Geral
-            </label>
-            <input
-              type="text"
-              id="directorName"
-              value={directorName}
-              onChange={(e) => setDirectorName(e.target.value)}
-              className="w-full px-4 py-3 text-lg bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all shadow-sm"
-              placeholder="Ex: Carlos Henrique Ferreira De Mello"
-            />
-            <p className="mt-2 text-sm text-slate-500 font-medium">Este nome aparecerá abaixo da assinatura em todos os certificados gerados.</p>
+            <h3 className="text-lg font-bold text-slate-800 mb-4">Após o Download dos Certificados</h3>
+            <p className="text-sm text-slate-600 mb-4">
+              O que o sistema deve fazer com os alunos que estão na fila de geração após você baixar os certificados?
+            </p>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="clearBehavior" 
+                  value="ask" 
+                  checked={clearQueueBehavior === 'ask'} 
+                  onChange={() => setClearQueueBehavior('ask')}
+                  className="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-600"
+                />
+                <span className="text-slate-700 font-medium">Perguntar o que fazer (Limpar ou Manter)</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="clearBehavior" 
+                  value="always" 
+                  checked={clearQueueBehavior === 'always'} 
+                  onChange={() => setClearQueueBehavior('always')}
+                  className="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-600"
+                />
+                <span className="text-slate-700 font-medium">Sempre limpar a fila automaticamente</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="clearBehavior" 
+                  value="never" 
+                  checked={clearQueueBehavior === 'never'} 
+                  onChange={() => setClearQueueBehavior('never')}
+                  className="w-5 h-5 text-blue-600 border-slate-300 focus:ring-blue-600"
+                />
+                <span className="text-slate-700 font-medium">Sempre manter a fila intacta</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Nome do Diretor */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+              <label htmlFor="directorName" className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Nome do Diretor Geral
+              </label>
+              <input
+                type="text"
+                id="directorName"
+                value={directorName}
+                onChange={(e) => setDirectorName(e.target.value)}
+                className="w-full px-4 py-3 text-lg bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all shadow-sm"
+                placeholder="Ex: Carlos Henrique Ferreira De Mello"
+              />
+              <p className="mt-2 text-sm text-slate-500 font-medium">Este nome aparecerá abaixo da assinatura.</p>
+            </div>
+            
+            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+              <label htmlFor="directorRegistry" className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">
+                Nº de Registro do Diretor
+              </label>
+              <input
+                type="text"
+                id="directorRegistry"
+                value={directorRegistry}
+                onChange={(e) => setDirectorRegistry(e.target.value)}
+                className="w-full px-4 py-3 text-lg bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all shadow-sm"
+                placeholder="Ex: Reg. nº 12345/2026"
+              />
+              <p className="mt-2 text-sm text-slate-500 font-medium">Aparecerá logo abaixo da função "Diretor Geral".</p>
+            </div>
           </div>
 
           {/* Assinatura */}
@@ -111,33 +138,6 @@ export const SettingsTab = () => {
                   </label>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Brasões */}
-          <div className="pt-6 border-t border-slate-100">
-            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-              <Shield className="text-dourado" /> Brasões e Distintivos do Certificado
-            </h3>
-            <p className="text-sm text-slate-500 mb-6">
-              Faça o upload das imagens que você enviou (como "segexsf.png" e "badmqgex2.png") nestes campos. 
-              Elas serão exibidas nos cantos superior esquerdo e direito do certificado gerado.
-            </p>
-            <div className="flex flex-col md:flex-row gap-6">
-              {renderUploader(
-                "Brasão Esquerdo",
-                leftBadge,
-                setLeftBadge,
-                "leftBadgeUpload",
-                "Ex: segexsf.png"
-              )}
-              {renderUploader(
-                "Brasão Direito",
-                rightBadge,
-                setRightBadge,
-                "rightBadgeUpload",
-                "Ex: badmqgex2.png"
-              )}
             </div>
           </div>
 

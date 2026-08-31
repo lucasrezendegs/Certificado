@@ -6,19 +6,19 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       directorName: 'Carlos Henrique Ferreira De Mello',
+      directorRegistry: 'Reg. nº 12345/2026',
       directorSignature: null,
-      leftBadge: null,
-      rightBadge: null,
       controlNumbers: ['001/CVTE/2026', '006/CVTE/2026'],
       courses: ['Condutores de Veículos de Transporte de Emergência', 'Formação de Cabos', 'Direção Defensiva Avançada'],
       categories: ['AD', 'B', 'C', 'D', 'E'],
       workloads: ['50h/a', '40h/a', '60h/a', '80h/a'],
       students: [],
+      clearQueueBehavior: 'ask',
 
       setDirectorName: (name) => set({ directorName: name }),
+      setDirectorRegistry: (registry) => set({ directorRegistry: registry }),
       setDirectorSignature: (signature) => set({ directorSignature: signature }),
-      setLeftBadge: (badge) => set({ leftBadge: badge }),
-      setRightBadge: (badge) => set({ rightBadge: badge }),
+      setClearQueueBehavior: (behavior) => set({ clearQueueBehavior: behavior }),
       
       addControlNumber: (controlNumber) => set((state) => ({ 
         controlNumbers: state.controlNumbers.includes(controlNumber) ? state.controlNumbers : [...state.controlNumbers, controlNumber] 

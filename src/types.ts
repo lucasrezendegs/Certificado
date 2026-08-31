@@ -13,21 +13,23 @@ export interface StudentData {
   issueDate: string; // Data de Emissão (YYYY-MM-DD)
 }
 
+export type ClearQueueBehavior = 'ask' | 'always' | 'never';
+
 export interface AppState {
   directorName: string;
+  directorRegistry: string;
   directorSignature: string | null;
-  leftBadge: string | null;
-  rightBadge: string | null;
   controlNumbers: string[];
   courses: string[];
   categories: string[];
   workloads: string[];
   students: StudentData[];
+  clearQueueBehavior: ClearQueueBehavior;
   
   setDirectorName: (name: string) => void;
+  setDirectorRegistry: (registry: string) => void;
   setDirectorSignature: (signature: string | null) => void;
-  setLeftBadge: (badge: string | null) => void;
-  setRightBadge: (badge: string | null) => void;
+  setClearQueueBehavior: (behavior: ClearQueueBehavior) => void;
   addControlNumber: (controlNumber: string) => void;
   addCourse: (course: string) => void;
   addCategory: (category: string) => void;

@@ -52,93 +52,46 @@ const formatPeriodExtenso = (start: string, end: string, fallback?: string) => {
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
-    backgroundColor: '#F9F9F6', // Cor de papel creme/pergaminho
-    padding: 25,
     fontFamily: 'Times-Roman',
-  },
-  outerBorder: {
-    border: '3pt solid #111827', // Preto/chumbo escuro
-    padding: 2,
-    height: '100%',
-  },
-  middleBorder: {
-    border: '1pt solid #111827',
-    padding: 2,
-    height: '100%',
-  },
-  innerBorder: {
-    border: '1pt solid #111827',
-    height: '100%',
-    padding: 35,
-    flexDirection: 'column',
-    alignItems: 'center',
-    position: 'relative',
-    backgroundColor: '#ffffff',
-  },
-  header: {
-    flexDirection: 'column',
-    alignItems: 'center',
     width: '100%',
-    position: 'relative',
-    marginBottom: 20,
+    height: '100%',
   },
-  centerBadge: {
-    width: 45,
-    height: 45,
-    marginBottom: 8,
-    objectFit: 'contain',
-  },
-  leftBadge: {
+  backgroundImage: {
     position: 'absolute',
-    top: -10,
-    left: -10,
-    width: 65,
-    height: 85,
-    objectFit: 'contain',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: -1,
   },
-  rightContainer: {
-    position: 'absolute',
-    top: -10,
-    right: -10,
-    alignItems: 'center',
-  },
-  rightBadge: {
-    width: 65,
-    height: 85,
-    objectFit: 'contain',
-    marginBottom: 4,
+  contentContainer: {
+    flex: 1,
   },
   controlNumber: {
-    fontSize: 10,
+    position: 'absolute',
+    top: 175, // Ajustado para ficar abaixo do brasão
+    right: 70,
+    fontSize: 11,
     fontFamily: 'Times-Roman',
-    color: '#4b5563',
+    color: '#333333',
+    textAlign: 'right',
   },
-  federalText: {
-    fontFamily: 'Times-Roman',
-    fontSize: 9,
-    textAlign: 'center',
-    lineHeight: 1.2,
-    color: '#111827',
-    letterSpacing: 0.5,
-  },
-  title: {
-    fontSize: 24,
-    color: '#111827',
-    fontFamily: 'Times-Bold',
-    letterSpacing: 1.5,
-    marginTop: 25,
-    marginBottom: 25,
-    textTransform: 'uppercase',
+  textWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingTop: 160, // Espaço do cabeçalho
+    paddingBottom: 130, // Espaço da assinatura
+    paddingHorizontal: 70,
   },
   bodyText: {
     fontSize: 15,
     fontFamily: 'Times-Roman',
     lineHeight: 1.8,
     textAlign: 'justify',
-    marginTop: 10,
-    marginBottom: 40,
+    marginBottom: 20,
     color: '#111827',
-    paddingHorizontal: 20,
   },
   boldText: {
     fontFamily: 'Times-Bold',
@@ -147,15 +100,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Times-Bold',
     textAlign: 'center',
-    marginBottom: 35,
     color: '#111827',
   },
   signatureContainer: {
+    position: 'absolute',
+    bottom: 75,
+    left: 70,
+    right: 70,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    width: '100%',
-    marginTop: 'auto',
   },
   signatureBlock: {
     alignItems: 'center',
@@ -185,6 +139,12 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginTop: 2,
   },
+  signatureRegistry: {
+    fontSize: 10,
+    fontFamily: 'Times-Roman',
+    color: '#111827',
+    marginTop: 1,
+  },
   footerRight: {
     alignItems: 'flex-end',
     marginBottom: 5,
@@ -202,67 +162,49 @@ interface CertificateProps {
   key?: React.Key;
   student: StudentData;
   directorName: string;
+  directorRegistry: string;
   directorSignature: string | null;
-  leftBadge: string | null;
-  rightBadge: string | null;
 }
 
-export const CertificatePage = ({ student, directorName, directorSignature, leftBadge, rightBadge }: CertificateProps) => (
+export const CertificatePage = ({ student, directorName, directorRegistry, directorSignature }: CertificateProps) => (
   <Page size="A4" orientation="landscape" style={styles.page}>
-    <View style={styles.outerBorder}>
-      <View style={styles.middleBorder}>
-        <View style={styles.innerBorder}>
-          
-          <View style={styles.header}>
-            <Image src={leftBadge || "/segexsf.png"} style={styles.leftBadge} />
-            
-            <View style={styles.rightContainer}>
-              <Image src={rightBadge || "/badmqgex2.png"} style={styles.rightBadge} />
-              <Text style={styles.controlNumber}>{student.controlNumber}</Text>
-            </View>
-            
-            <Image src="/logo_md.png" style={styles.centerBadge} />
-            <Text style={styles.federalText}>
-              REPÚBLICA FEDERATIVA DO BRASIL{'\n'}
-              MINISTÉRIO DA DEFESA{'\n'}
-              EXÉRCITO BRASILEIRO
-            </Text>
+    <Image src="/template.png" style={styles.backgroundImage} fixed={true} />
+    
+    <View style={styles.contentContainer}>
+      <Text style={styles.controlNumber}>{student.controlNumber}</Text>
+      
+      <View style={styles.textWrapper}>
+        <Text style={styles.bodyText}>
+          A Instituição de Ensino de Trânsito da Base Administrativa do Quartel-General do Exército – Forte Caxias – 
+          (Instrução Nº 592, de 10 de agosto de 2020/Detran-DF) certifica que <Text style={styles.boldText}>{student.name.toUpperCase()}</Text>, 
+          inscrito no CPF nº <Text style={styles.boldText}>{student.cpf}</Text> e no Nº REGISTRO <Text style={styles.boldText}>{student.registry}</Text>, 
+          categoria "<Text style={styles.boldText}>{student.category}</Text>", concluiu com aproveitamento o Curso Especializado 
+          para <Text style={styles.boldText}>{student.course}</Text>, ministrado pela IET - Forte Caxias, no período de 
+          {' '}<Text style={styles.boldText}>{formatPeriodExtenso(student.periodStart, student.periodEnd, student.period)}</Text>, com carga horária de <Text style={styles.boldText}>{student.workload}</Text>, 
+          com validade de cinco anos após o término do curso, conforme Resolução Nº 1.020/2025 do CONTRAN.
+        </Text>
 
-            <Text style={styles.title}>CERTIFICADO DE CONCLUSÃO</Text>
-          </View>
+        <Text style={styles.date}>
+          Brasília-DF, {formatDateExtenso(student.issueDate)}.
+        </Text>
+      </View>
 
-          <Text style={styles.bodyText}>
-            A Instituição de Ensino de Trânsito da Base Administrativa do Quartel-General do Exército – Forte Caxias – 
-            (Instrução Nº 592, de 10 de agosto de 2020/Detran-DF) certifica que <Text style={styles.boldText}>{student.name.toUpperCase()}</Text>, 
-            inscrito no CPF nº <Text style={styles.boldText}>{student.cpf}</Text> e no Nº REGISTRO <Text style={styles.boldText}>{student.registry}</Text>, 
-            categoria "<Text style={styles.boldText}>{student.category}</Text>", concluiu com aproveitamento o Curso Especializado 
-            para <Text style={styles.boldText}>{student.course}</Text>, ministrado pela IET - Forte Caxias, no período de 
-            {' '}<Text style={styles.boldText}>{formatPeriodExtenso(student.periodStart, student.periodEnd, student.period)}</Text>, com carga horária de <Text style={styles.boldText}>{student.workload}</Text>, 
-            com validade de cinco anos após o término do curso, conforme Resolução Nº 1.020/2025 do CONTRAN.
-          </Text>
-
-          <Text style={styles.date}>
-            Brasília-DF, {formatDateExtenso(student.issueDate)}.
-          </Text>
-
-          <View style={styles.signatureContainer}>
-            <View style={styles.signatureBlock}>
-              {directorSignature ? (
-                <Image src={directorSignature} style={styles.signatureImage} />
-              ) : (
-                <View style={{ height: 60 }} />
-              )}
-              <View style={styles.signatureLine} />
-              <Text style={styles.signatureName}>{directorName.toUpperCase()}</Text>
-              <Text style={styles.signatureRole}>Diretor Geral</Text>
-            </View>
-            
-            <View style={styles.footerRight}>
-              <Text style={styles.footerText}>CNPJ Nº 21.744.847/0001-50</Text>
-              <Text style={styles.footerText}>BASE ADMINISTRATIVA DO QUARTEL-GENERAL DO EXÉRCITO</Text>
-            </View>
-          </View>
-
+      <View style={styles.signatureContainer}>
+        <View style={styles.signatureBlock}>
+          {directorSignature ? (
+            <Image src={directorSignature} style={styles.signatureImage} />
+          ) : (
+            <View style={{ height: 60 }} />
+          )}
+          <View style={styles.signatureLine} />
+          <Text style={styles.signatureName}>{directorName.toUpperCase()}</Text>
+          <Text style={styles.signatureRole}>Diretor Geral</Text>
+          {directorRegistry && <Text style={styles.signatureRegistry}>{directorRegistry}</Text>}
+        </View>
+        
+        <View style={styles.footerRight}>
+          <Text style={styles.footerText}>CNPJ Nº 21.744.847/0001-50</Text>
+          <Text style={styles.footerText}>BASE ADMINISTRATIVA DO QUARTEL-GENERAL DO EXÉRCITO</Text>
         </View>
       </View>
     </View>
@@ -275,16 +217,15 @@ export const SingleCertificatePDF = (props: CertificateProps) => (
   </Document>
 );
 
-export const BulkCertificatePDF = ({ students, directorName, directorSignature, leftBadge, rightBadge }: { students: StudentData[], directorName: string, directorSignature: string | null, leftBadge: string | null, rightBadge: string | null }) => (
+export const BulkCertificatePDF = ({ students, directorName, directorRegistry, directorSignature }: { students: StudentData[], directorName: string, directorRegistry: string, directorSignature: string | null }) => (
   <Document>
     {students.map((student, index) => (
       <CertificatePage 
         key={index} 
         student={student} 
         directorName={directorName} 
+        directorRegistry={directorRegistry}
         directorSignature={directorSignature} 
-        leftBadge={leftBadge}
-        rightBadge={rightBadge}
       />
     ))}
   </Document>

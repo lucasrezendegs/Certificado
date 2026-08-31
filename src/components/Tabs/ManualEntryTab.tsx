@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
 import { useAppStore } from '../../store';
 import { StudentData } from '../../types';
-import { SingleCertificatePDF } from '../CertificatePDF';
-import { Download, PlusCircle, User, BookOpen, FileCheck, Calendar } from 'lucide-react';
+import { PlusCircle, User, BookOpen, FileCheck, Calendar, ListPlus } from 'lucide-react';
 
-export const ManualEntryTab = () => {
-  const { directorName, directorSignature, leftBadge, rightBadge, controlNumbers, courses, categories, workloads, addControlNumber, addCourse, addCategory, addWorkload } = useAppStore();
+interface Props {
+  setActiveTab: (tab: 'settings' | 'manual' | 'bulk' | 'preview') => void;
+}
+
+export const ManualEntryTab = ({ setActiveTab }: Props) => {
+  const { directorName, directorSignature, controlNumbers, courses, categories, workloads, addControlNumber, addCourse, addCategory, addWorkload, addStudent } = useAppStore();
   
   const todayISO = new Date().toISOString().split('T')[0];
 
@@ -49,8 +51,10 @@ export const ManualEntryTab = () => {
     formData.periodStart && formData.periodEnd && formData.workload && formData.issueDate
   );
 
-  const sanitizeFileName = (name: string) => {
-    return name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_').toUpperCase();
+  const handleAddToQueue = () => {
+    if (!isFormValid) return;
+    addStudent({ ...formData, id: crypto.randomUUID() });
+    setActiveTab('preview');
   };
 
   const Label = ({ children, icon: Icon }: { children: React.ReactNode, icon?: any }) => (
@@ -203,18 +207,13 @@ export const ManualEntryTab = () => {
             Preencha todos os campos corretamente para habilitar a geração do certificado.
           </div>
         ) : (
-          <PDFDownloadLink
-            document={<SingleCertificatePDF student={formData} directorName={directorName} directorSignature={directorSignature} leftBadge={leftBadge} rightBadge={rightBadge} />}
-            fileName={`CERTIFICADO_${sanitizeFileName(formData.name)}.pdf`}
+          <button
+            onClick={handleAddToQueue}
             className="w-full md:w-auto flex items-center justify-center gap-3 bg-gradient-to-r from-blue-700 to-blue-900 hover:from-blue-800 hover:to-blue-950 text-white text-xl font-bold py-5 px-10 rounded-xl shadow-lg transform transition-all hover:scale-105 active:scale-95"
           >
-            {({ loading }) => (
-              <>
-                <Download size={28} />
-                {loading ? 'Preparando Documento...' : 'Gerar e Baixar PDF'}
-              </>
-            )}
-          </PDFDownloadLink>
+            <ListPlus size={28} />
+            Adicionar à Fila de Geração
+          </button>
         )}
       </div>
     </div>
